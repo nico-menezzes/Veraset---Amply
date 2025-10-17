@@ -1,0 +1,98 @@
+
+	html:not(.wf-design-mode) [data='navbar-home'] {
+    opacity: 0;
+  }
+  
+   html:not(.wf-design-mode) [data='paragraph-hero-home'] {
+    opacity: 0;
+  }
+  
+  
+   html:not(.wf-design-mode) .u-button-group {
+    opacity: 0;
+  }
+  
+  html:not(.wf-design-mode) .bg-hero-home-lines {
+    opacity: 0;
+    transform: scaleY(0);
+  }
+  
+  html:not(.wf-design-mode) .line-nav {
+    opacity: 0;
+    transform: scaleY(0.5);
+  }
+
+  html:not(.wf-design-mode) .hero_coordinates-wrapper {
+    opacity: 0;
+  }
+  
+  .card-location-data:hover .card-location-data_hover-content {
+    opacity: 1;
+    transform: translateY(0%);
+
+  }
+
+  /* Grid Background - Quadrados automáticos de 32px */
+  .grid-bg {
+    position: relative;
+    width: 100%;
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1px;
+    background-color: #f0f0f0;
+  }
+
+  .grid-bg_square {
+    width: 32px;
+    height: 32px;
+    background-color: rgba(189, 189, 180, 0.2);
+    flex-shrink: 0;
+  }
+
+  /* Responsividade - quadrados menores em mobile */
+  @media (max-width: 768px) {
+    .grid-bg_square {
+      width: 24px;
+      height: 24px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .grid-bg_square {
+      width: 20px;
+      height: 20px;
+    }
+  }
+
+  /* Tab System - Atributo tab-active - APENAS NO EDITOR WEBFLOW */
+  .wf-design-mode .tab-products {
+    /* Esconde todas as tabs por padrão no editor */
+  }
+  
+  /* Esconde todos os conteúdos das tabs por padrão no editor */
+  .wf-design-mode .tab-products [data-tab] {
+    display: none;
+  }
+  
+  /* Mostra a tab ativa baseada no atributo tab-active no editor */
+  .wf-design-mode .tab-products[tab-active="1"] [data-tab="1"],
+  .wf-design-mode .tab-products[tab-active="2"] [data-tab="2"],
+  .wf-design-mode .tab-products[tab-active="3"] [data-tab="3"],
+  .wf-design-mode .tab-products[tab-active="4"] [data-tab="4"],
+  .wf-design-mode .tab-products[tab-active="5"] [data-tab="5"] {
+    display: block;
+  }
+  
+  /* Line Process - Hidden below 1280px */
+  .line-process {
+    display: block;
+  }
+
+  @media (max-width: 1279px) {
+    .line-process {
+      display: none;
+    }
+  }
+  
