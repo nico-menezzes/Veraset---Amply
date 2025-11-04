@@ -1,101 +1,65 @@
 window.Webflow ||= [];
 window.Webflow.push(() => {
-  
-  class TabGroupLinkInfo {
-    constructor() {
-      this.init();
-    }
-    
-    init() {
-      this.setupInitialState();
-      this.setupTabObserver();
-      this.setupResizeListener();
-    }
-    
-    isMobileView() {
-      return window.innerWidth <= 568;
-    }
-    
-    getTargetSelector() {
-      return this.isMobileView() 
-        ? '.tab-group_link-content .tab-group_link-info .u-text-small, .tab-group-mobile-content' 
-        : '.tab-group_link-content .tab-group_link-info .u-text-small';
-    }
-    
-    setupInitialState() {
-      const selector = this.getTargetSelector();
-      const allElements = document.querySelectorAll(selector);
-      allElements.forEach((element) => {
-        gsap.set(element, { opacity: 0, display: 'none' });
-      });
-    }
-    
-    setupTabObserver() {
-      const tabGroupLinks = document.querySelectorAll('.tab-group_link');
-      
-      if (!tabGroupLinks.length) return;
-      
-      tabGroupLinks.forEach(tabGroupLink => {
-        const observer = new MutationObserver((mutations) => {
-          mutations.forEach((mutation) => {
-            if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
-              this.handleTabChange();
-            }
-          });
+  // --- CUSTOM TAB GROUP INFO DISPLAY ---
+  const initTabGroupInfo = () => {
+    const config = {
+      tabComponentSelector: '[data-tabs="component"]',
+      tabLinkSelector: '[data-tab-link]',
+      infoPanelSelector: '[data-tab-info]',
+      activeClass: 'w--current',
+    };
+
+    const tabComponents = document.querySelectorAll(config.tabComponentSelector);
+    if (!tabComponents.length) return;
+
+    tabComponents.forEach(component => {
+      const tabLinks = component.querySelectorAll(config.tabLinkSelector);
+      const infoPanels = component.querySelectorAll(config.infoPanelSelector);
+
+      if (!tabLinks.length || !infoPanels.length) {
+        console.warn('Tab links or info panels not found in a component.');
+        return;
+      }
+
+      // Hides all panels and shows the one corresponding to the active tab.
+      const updatePanels = () => {
+        let activePanel = null;
+
+        tabLinks.forEach(link => {
+          const tabName = link.getAttribute('data-tab-link');
+          const correspondingPanel = component.querySelector(`[data-tab-info="${tabName}"]`);
+          
+          if (link.classList.contains(config.activeClass) && correspondingPanel) {
+            activePanel = correspondingPanel;
+          } else if (correspondingPanel) {
+            gsap.set(correspondingPanel, { display: 'none', opacity: 0 });
+          }
         });
-        
-        observer.observe(tabGroupLink, {
-          attributes: true,
-          attributeFilter: ['class']
-        });
-      });
-      
-      this.handleTabChange();
-    }
-    
-    setupResizeListener() {
-      let resizeTimeout;
-      window.addEventListener('resize', () => {
-        clearTimeout(resizeTimeout);
-        resizeTimeout = setTimeout(() => {
-          this.setupInitialState();
-          this.handleTabChange();
-        }, 150);
-      });
-    }
-    
-    handleTabChange() {
-      const selector = this.getTargetSelector();
-      const allElements = document.querySelectorAll(selector);
-      
-      allElements.forEach(element => {
-        gsap.set(element, { opacity: 0, display: 'none' });
-      });
-      
-      const activeTab = document.querySelector('.tab-group_link.w--current');
-      
-      if (activeTab) {
-        const activeElement = activeTab.querySelector(selector);
-        
-        if (activeElement) {
-          gsap.to(activeElement, {
+
+        if (activePanel) {
+          gsap.to(activePanel, {
             autoAlpha: 1,
-            opacity: 1,
-            display: 'block',
-            duration: 0.75,
-            ease: "power2.out"
+            duration: 0.5,
+            ease: 'power2.out',
           });
         }
-      }
-    }
-  }
-  
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
-      new TabGroupLinkInfo();
+      };
+
+      // Set initial state on page load.
+      updatePanels();
+
+      // Use event delegation on the component to handle clicks.
+      component.addEventListener('click', (e) => {
+        // Check if a tab link or its child was clicked.
+        const clickedTab = e.target.closest(config.tabLinkSelector);
+        if (!clickedTab) return;
+        
+        // Let Webflow's tab logic run, then update our panels.
+        // A small delay ensures we're reacting after Webflow adds the .w--current class.
+        setTimeout(updatePanels, 0);
+      });
     });
-  } else {
-    new TabGroupLinkInfo();
-  }
-  
+  };
+
+  initTabGroupInfo();
 });

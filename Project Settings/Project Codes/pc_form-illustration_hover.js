@@ -1,52 +1,48 @@
 window.Webflow ||= [];
 window.Webflow.push(() => {
+  // --- FORM ILLUSTRATION HOVER EFFECT ---
+  const initFormIllustrationHover = () => {
+    const trigger = document.querySelector('.illustration-wrap');
+    const illustration = document.querySelector('.illustration-form');
+
+    if (!trigger || !illustration) {
+      console.warn('Form illustration elements not found.');
+      return;
+    }
+
+    const triggerRect = trigger.getBoundingClientRect();
+
+    // Maps mouse position to a rotation value
+    const getRotationFromMouse = (mouseX) => {
+      const centerX = triggerRect.left + triggerRect.width / 2;
+      const distance = mouseX - centerX;
+      const rotation = distance * 0.1; // Adjust sensitivity
+      return rotation;
+    };
+
+    // Handles mouse movement over the trigger area
+    const handleMouseMove = (e) => {
+      const rotation = getRotationFromMouse(e.clientX);
+      gsap.to(illustration, {
+        rotation,
+        duration: 1.5,
+        ease: 'power1.out',
+      });
+    };
+
+    // Resets the illustration when the mouse leaves
+    const handleMouseLeave = () => {
+      gsap.to(illustration, {
+        rotation: 0,
+        duration: 1.5,
+        ease: 'power1.out',
+      });
+    };
+
+    trigger.addEventListener('mousemove', handleMouseMove);
+    trigger.addEventListener('mouseleave', handleMouseLeave);
+  };
+
   initFormIllustrationHover();
 });
-
-function initFormIllustrationHover() {
-  const trigger = document.querySelector('.illustration-wrap');
-  const illustration = document.querySelector('.illustration-form');
-  
-  if (!trigger || !illustration) {
-    console.warn('Element .illustration-wrap or .illustration-form not found');
-    return;
-  }
-
-  // Função para mapear a posição do mouse para rotação
-  function mapMouseToRotation(mouseX, elementRect) {
-    const elementCenterX = elementRect.left + elementRect.width / 2;
-    const relativeX = mouseX - elementCenterX;
-    const normalizedX = relativeX / (elementRect.width / 2);
-    
-    // Limita entre -1 e 1, depois mapeia para -10deg a 10deg
-    const clampedX = Math.max(-1, Math.min(1, normalizedX));
-    return clampedX * 10;
-  }
-
-  // Handler do mousemove
-  function handleMouseMove(e) {
-    const rect = trigger.getBoundingClientRect();
-    const rotation = mapMouseToRotation(e.clientX, rect);
-    
-    // Animação bem suave e lenta com GSAP
-    gsap.to(illustration, {
-      rotation: rotation,
-      duration: 1.5,
-      ease: "power1.out"
-    });
-  }
-
-  // Handler do mouseleave para voltar à posição original
-  function handleMouseLeave() {
-    gsap.to(illustration, {
-      rotation: 0,
-      duration: 1.5,
-      ease: "power1.out"
-    });
-  }
-
-  // Adiciona os event listeners no trigger
-  trigger.addEventListener('mousemove', handleMouseMove);
-  trigger.addEventListener('mouseleave', handleMouseLeave);
-}
 

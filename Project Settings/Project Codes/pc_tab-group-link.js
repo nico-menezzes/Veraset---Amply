@@ -1,129 +1,75 @@
 window.Webflow ||= [];
 window.Webflow.push(() => {
-  
-  class TabGroupLink {
-    constructor() {
-      this.forceInterval = null;
-      this.init();
-    }
-    
-    init() {
-      this.setupTabObserver();
-      this.startForceRemoval();
-    }
-    
-    setupTabObserver() {
-      const tabGroupLinks = document.querySelectorAll('.tab-group_link');
-      
-      if (!tabGroupLinks.length) return;
-      
-      tabGroupLinks.forEach(tabGroupLink => {
-        const observer = new MutationObserver((mutations) => {
-          mutations.forEach((mutation) => {
-            if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
-              this.handleTabChange();
-            }
-          });
-        });
+  // --- TAB GROUP COMBO CLASS SYNC ---
+  const initTabGroupClassSync = () => {
+    const config = {
+      tabComponentSelector: '[data-tabs="component"]', // Parent component
+      tabLinkSelector: '.tab-group_link', // Clickable tab links
+      tabContentSelector: '.tab-group_link-content', // Content to apply the class to
+      activeClass: 'w--current',
+      comboClassPrefix: 'cc-', // Prefix for combo classes to sync
+    };
+
+    const tabComponents = document.querySelectorAll(config.tabComponentSelector);
+    if (!tabComponents.length) return;
+
+    tabComponents.forEach(component => {
+      const tabLinks = component.querySelectorAll(config.tabLinkSelector);
+      if (!tabLinks.length) return;
+
+      const updateContentClass = () => {
+        let activeTab = null;
         
-        observer.observe(tabGroupLink, {
-          attributes: true,
-          attributeFilter: ['class']
+        // First, find the currently active tab.
+        tabLinks.forEach(link => {
+          if (link.classList.contains(config.activeClass)) {
+            activeTab = link;
+          }
         });
-      });
-      
-      this.handleTabChange();
-    }
-    
-    startForceRemoval() {
-      this.forceInterval = setInterval(() => {
-        this.handleTabChange();
-      }, 100);
-    }
-    
-    stopForceRemoval() {
-      if (this.forceInterval) {
-        clearInterval(this.forceInterval);
-        this.forceInterval = null;
-      }
-    }
-    
-    handleTabChange() {
-      const tabGroupLinks = document.querySelectorAll('.tab-group_link');
-      
-      if (!tabGroupLinks.length) return;
-      
-      tabGroupLinks.forEach(tabGroupLink => {
-        const content = tabGroupLink.querySelector('.tab-group_link-content');
-        if (content) {
-          this.removeClassFromAllElements(content);
+
+        // Find the corresponding content pane for the active tab.
+        const activeContent = activeTab ? activeTab.querySelector(config.tabContentSelector) : null;
+        if (!activeContent) return;
+
+        // Find the combo class on the active tab link.
+        let comboClass = '';
+        for (const cls of activeTab.classList) {
+          if (cls.startsWith(config.comboClassPrefix)) {
+            comboClass = cls;
+            break;
+          }
         }
-      });
-      
-      const activeTab = document.querySelector('.tab-group_link.w--current');
-      
-      if (activeTab) {
-        const activeContent = activeTab.querySelector('.tab-group_link-content');
-        
-        if (activeContent) {
-          let classToAdd = null;
-          
-          for (let attr of activeTab.attributes) {
-            const classMatch = attr.value.match(/\bcc-\w+/);
-            if (classMatch) {
-              classToAdd = classMatch[0];
-              break;
+
+        // Clean up classes on all content panes.
+        tabLinks.forEach(link => {
+          const content = link.querySelector(config.tabContentSelector);
+          if (content) {
+            for (const cls of content.classList) {
+              if (cls.startsWith(config.comboClassPrefix)) {
+                content.classList.remove(cls);
+              }
             }
           }
-          
-          if (classToAdd) {
-            this.addClassToAllElements(activeContent, classToAdd);
-          }
-        }
-      }
-    }
-    
-    removeClassFromAllElements(container) {
-      const allElements = container.querySelectorAll('*');
-      allElements.forEach(element => {
-        const classesToRemove = Array.from(element.classList).filter(cls => cls.startsWith('cc-'));
-        classesToRemove.forEach(cls => {
-          element.classList.remove(cls);
-          const currentClass = element.getAttribute('class');
-          if (currentClass && currentClass.includes(cls)) {
-            const newClass = currentClass.replace(new RegExp(`\\b${cls}\\b`, 'g'), '').trim();
-            element.setAttribute('class', newClass);
-          }
         });
-      });
-      
-      const classesToRemove = Array.from(container.classList).filter(cls => cls.startsWith('cc-'));
-      classesToRemove.forEach(cls => {
-        container.classList.remove(cls);
-        const currentClass = container.getAttribute('class');
-        if (currentClass && currentClass.includes(cls)) {
-          const newClass = currentClass.replace(new RegExp(`\\b${cls}\\b`, 'g'), '').trim();
-          container.setAttribute('class', newClass);
+        
+        // Apply the found combo class to the active content pane.
+        if (comboClass) {
+          activeContent.classList.add(comboClass);
         }
+      };
+
+      // Set initial state on page load.
+      updateContentClass();
+
+      // Use event delegation to handle clicks efficiently.
+      component.addEventListener('click', (e) => {
+        if (!e.target.closest(config.tabLinkSelector)) return;
+        
+        // A small delay ensures we run this after Webflow's tab logic.
+        setTimeout(updateContentClass, 0);
       });
-    }
-    
-    addClassToAllElements(container, classToAdd) {
-      const allElements = container.querySelectorAll('*');
-      allElements.forEach(element => {
-        element.classList.add(classToAdd);
-      });
-      
-      container.classList.add(classToAdd);
-    }
-  }
-  
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
-      new TabGroupLink();
     });
-  } else {
-    new TabGroupLink();
-  }
-  
+  };
+
+  initTabGroupClassSync();
 });

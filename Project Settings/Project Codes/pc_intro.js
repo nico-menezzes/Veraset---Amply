@@ -1,57 +1,76 @@
-  var Webflow = Webflow || []
-  Webflow.push(function () {
-    // If component does not exist, return
-    if (!document.querySelector('.hero_single-coordinate')) return
-    // If component needs to use an external library, load it here using the id.
-    onLibrariesLoaded([], function () {
-      // Select all count trigger sections
-      const coordinatesEl = document.querySelectorAll('.hero_single-coordinate')
-      if (!coordinatesEl) return
-      
-      const tl = gsap.timeline({ delay: 3.25 })
+window.Webflow ||= [];
+window.Webflow.push(() => {
+  // --- HERO COORDINATES INTRO ANIMATION ---
+  const initIntroAnimation = () => {
+    const config = {
+      containerSelector: '[data-anim="intro-container"]',
+      coordinateSelector: '.hero_single-coordinate',
+      svgPathSelector: '.coordinate_embed svg path',
+      countTriggerSelector: '[count-trigger]',
+      countNumberSelector: '[count-number]',
+      overallDelay: 3.25,
+      staggerDelay: 0.5, // Time between each coordinate animation starts
+    };
 
-      coordinatesEl.forEach((coordinate) => {
-        const countTrigger = coordinate.querySelector('[count-trigger]')
-        const svgEmbed = coordinate.querySelector('.coordinate_embed svg path')
-        const countNumbers = countTrigger.querySelectorAll('[count-number]')
+    const container = document.querySelector(config.containerSelector);
+    if (!container) return;
+    
+    // Check for required GSAP plugins
+    if (typeof DrawSVGPlugin === 'undefined') {
+      console.warn('DrawSVGPlugin is not loaded. Skipping intro animation.');
+      return;
+    }
 
-        if (!countTrigger || !svgEmbed) return
+    const coordinates = gsap.utils.toArray(config.coordinateSelector, container);
+    if (!coordinates.length) return;
 
+    const masterTimeline = gsap.timeline({ delay: config.overallDelay });
 
-        tl.from(coordinate, {
+    coordinates.forEach((coordinate) => {
+      const svgPath = coordinate.querySelector(config.svgPathSelector);
+      const countNumbers = coordinate.querySelectorAll(config.countNumberSelector);
+
+      // Create a dedicated timeline for each coordinate
+      const coordinateTl = gsap.timeline();
+
+      coordinateTl
+        .from(coordinate, {
           opacity: 0,
           y: 10,
           duration: 0.3,
           ease: 'power2.out',
-        }).from(svgEmbed, {
+        })
+        .from(svgPath, {
           drawSVG: '0%',
           duration: 0.4,
           ease: 'power2.out',
-        })
+        });
 
-        countNumbers.forEach((number, i) => {
-          const decimals = parseInt(number.getAttribute('count-decimals')) || 0
-          const targetNumber = parseFloat(number.textContent.replace(/,/g, ''))
-          const snapValue = decimals > 0 ? 1 / Math.pow(10, decimals) : 1
+      // Animate numbers
+      countNumbers.forEach((numberEl) => {
+        const decimals = parseInt(numberEl.getAttribute('count-decimals')) || 0;
+        const targetNumber = parseFloat(numberEl.textContent.replace(/,/g, ''));
+        
+        // Animate a value in an object for better performance
+        let counter = { value: 0 };
 
+        coordinateTl.to(counter, {
+          value: targetNumber,
+          duration: 0.8,
+          ease: 'power2.out',
+          onUpdate: () => {
+            numberEl.textContent = counter.value.toLocaleString(undefined, {
+              minimumFractionDigits: decimals,
+              maximumFractionDigits: decimals,
+            });
+          },
+        }, '-=0.2'); // Start slightly before the previous animation ends
+      });
 
-          tl.from(
-            number,
-            {
-              textContent: 0,
-              duration: 0.8,
-              ease: 'power2.out',
-              snap: { textContent: snapValue },
-            }, !i ? undefined : '-=0.8'
-          )
-        })
-      })
+      // Add the individual timeline to the master timeline
+      masterTimeline.add(coordinateTl, `-=${config.staggerDelay}`);
+    });
+  };
 
-      function formatNumber(number, decimals) {
-        return number.toLocaleString(undefined, {
-          minimumFractionDigits: decimals,
-          maximumFractionDigits: decimals,
-        })
-      }
-    })
-  })
+  initIntroAnimation();
+});

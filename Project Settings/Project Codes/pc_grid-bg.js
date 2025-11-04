@@ -1,54 +1,54 @@
 window.Webflow ||= [];
 window.Webflow.push(() => {
-  
-  // Função para criar grid automaticamente
-  function createAutoGrid() {
+  // --- DYNAMIC GRID BACKGROUND ---
+  const initDynamicGrid = () => {
     const gridContainer = document.querySelector('.grid-bg');
-    if (!gridContainer) return;
-
-    // Limpar grid existente
-    gridContainer.innerHTML = '';
-
-    // Dimensões do quadrado (32px)
-    const squareSize = 32;
-    
-    // Calcular número de colunas e linhas
-    const containerWidth = gridContainer.offsetWidth;
-    const containerHeight = gridContainer.offsetHeight;
-    
-    const columns = Math.floor(containerWidth / squareSize);
-    const rows = Math.floor(containerHeight / squareSize);
-
-    // Criar quadrados automaticamente
-    for (let i = 0; i < columns * rows; i++) {
-      const square = document.createElement('div');
-      square.className = 'grid-bg_square';
-      square.style.width = `${squareSize}px`;
-      square.style.height = `${squareSize}px`;
-      square.style.backgroundColor = 'rgba(189, 189, 180, 0.2)';
-      
-      gridContainer.appendChild(square);
+    if (!gridContainer) {
+      console.warn('Grid background container not found.');
+      return;
     }
 
-    console.log(`Grid criado: ${columns} colunas x ${rows} linhas = ${columns * rows} quadrados`);
-  }
+    // Debounce function to limit how often a function gets called.
+    const debounce = (func, delay) => {
+      let timeout;
+      return (...args) => {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(this, args), delay);
+      };
+    };
 
-  // Função para redimensionar quando a tela muda
-  function handleResize() {
-    let resizeTimeout;
-    clearTimeout(resizeTimeout);
-    resizeTimeout = setTimeout(() => {
-      createAutoGrid();
-    }, 100);
-  }
+    const createGrid = () => {
+      // Use requestAnimationFrame to ensure calculations happen on the next paint cycle
+      requestAnimationFrame(() => {
+        const squareSize = 32;
+        const containerWidth = gridContainer.offsetWidth;
+        const containerHeight = gridContainer.offsetHeight;
 
-  // Inicializar quando a página carrega
-  createAutoGrid();
+        const columns = Math.floor(containerWidth / squareSize);
+        const rows = Math.floor(containerHeight / squareSize);
+        const totalSquares = columns * rows;
 
-  // Escutar mudanças de tamanho
-  window.addEventListener('resize', handleResize);
-  window.addEventListener('orientationchange', () => {
-    setTimeout(createAutoGrid, 100);
-  });
+        // Use a DocumentFragment for performance
+        const fragment = document.createDocumentFragment();
 
+        for (let i = 0; i < totalSquares; i++) {
+          const square = document.createElement('div');
+          square.className = 'grid-bg_square';
+          fragment.appendChild(square);
+        }
+
+        // Clear existing grid and append the new one in a single operation
+        gridContainer.innerHTML = '';
+        gridContainer.appendChild(fragment);
+      });
+    };
+
+    const debouncedCreateGrid = debounce(createGrid, 250);
+
+    createGrid();
+    window.addEventListener('resize', debouncedCreateGrid);
+    window.addEventListener('orientationchange', debouncedCreateGrid);
+  };
+
+  initDynamicGrid();
 });
